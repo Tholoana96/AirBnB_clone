@@ -1,93 +1,49 @@
 #!/usr/bin/python3
-
-"""Entry point of the command interpreter"""
-
+"""Command interpreter module"""
 import cmd
+import sys
+import models
+from models import storage
 from models.base_model import BaseModel
 from models.user import User
+# Import other classes as needed
 
 class HBNBCommand(cmd.Cmd):
+    """Command interpreter class"""
+    prompt = "(hbnb) "
 
-    prompt = '(hbnb) '
-    def do_quit(self, arg):
-        """Quit command to exit the commandline"""
-        return True
+    def do_quit(self, args):
+        """Quit command to exit the program"""
+        sys.exit(0)
 
-    def do_EOF(self, arg):
-        """Handles CTRL+D signal"""
-        return True
+    def do_EOF(self, args):
+        """EOF command to exit the program"""
+        print()
+        sys.exit(0)
 
     def emptyline(self):
-        """An empty commandline + ENTER shouldn’t execute anything"""
+        """Do nothing when an empty line is entered"""
         pass
 
-    def do_create(self, arg):
-        """Creates a new instance of BaseModel"""
-        if not arg:
-            print("** class name missing **")
-        elif arg != "BaseModel":
-            print("** class doesn't exist **")
-        else:
-            new = BaseModel()
-            new.save()
-            print(new.id)
+    def default(self, line):
+        """Called on an input line when the command prefix is not recognized"""
+        cmd, arg, line = self.parseline(line)
+        if cmd is None:
+            return
+        if cmd == "":
+            self.emptyline()
+            return
+        if not self.onecmd_plus_hooks(line):
+            print("*** Unknown syntax:", line)
 
-    def do_show(self, arg):
-        """Prints the string representation of an instance based on the class name and id"""
-        if not arg:
-            print("** class name missing **")
-        elif arg != "BaseModel":
-            print("** class doesn't exist **")
-        else:
-            print("** instance id missing **")
-    pass
-    def do_destroy(self, arg):
-        """Deletes an instance based on the class name and id"""
-        if not arg:
-            print("** class name missing **")
-        elif arg != "BaseModel":
-            print("** class doesn't exist **")
-        else:
-            print("** instance id missing **")
-    pass
-    def do_all(self, arg):
+    def do_all(self, args):
         """Prints all string representation of all instances based or not on the class name"""
-        if not arg:
-            print("** class name missing **")
-        elif arg != "BaseModel":
+        if len(args) == 0:
+            print([str(obj) for obj in storage.all().values()])
+        elif args not in models.classes:
             print("** class doesn't exist **")
         else:
-            print("** instance id missing **")
-    pass
-    def do_update(self, arg):
-        """Updates an instance based on the class name and id by adding or updating attribute"""
-        if not arg:
-            print("** class name missing **")
-        elif arg != "BaseModel":
-            print("** class doesn't exist **")
-        else:
-            print("** instance id missing **")
-    pass
-    def do_count(self, arg):
-        """Retrieves the number of instances of a class"""
-        if not arg:
-            print("** class name missing **")
-        elif arg != "BaseModel":
-            print("** class doesn't exist **")
-        else:
-            print("** instance id missing **")
+            print([str(obj) for obj in storage.all().values() if obj.__class__.__name__ == args])
 
-    pass
-    def do_BaseModel(self, arg):
-        """Retrieves an instance based on its ID"""
-        if not arg:
-            print("** class name missing **")
-        elif arg != "BaseModel":
-            print("** class doesn't exist **")
-        else:
-            print("** instance id missing **")
-    pass
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     HBNBCommand().cmdloop()
