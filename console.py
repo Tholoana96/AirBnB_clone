@@ -4,11 +4,14 @@
 
 import cmd
 from models.base_model import BaseModel
-from models.user import User
+from models import storage
+import json
+
 
 class HBNBCommand(cmd.Cmd):
 
     prompt = '(hbnb) '
+
     def do_quit(self, arg):
         """Quit command to exit the commandline"""
         return True
@@ -34,59 +37,98 @@ class HBNBCommand(cmd.Cmd):
 
     def do_show(self, arg):
         """Prints the string representation of an instance based on the class name and id"""
-        if not arg:
+        args = arg.split()
+        if not args:
             print("** class name missing **")
-        elif arg != "BaseModel":
+        elif args[0] != "BaseModel":
             print("** class doesn't exist **")
-        else:
+        elif len(args) < 2:
             print("** instance id missing **")
-    pass
+        else:
+            key = "{}.{}".format(args[0], args[1])
+            if key not in storage.all():
+                print("** no instance found **")
+            else:
+                print(storage.all()[key])
+
     def do_destroy(self, arg):
         """Deletes an instance based on the class name and id"""
-        if not arg:
+        args = arg.split()
+        if not args:
             print("** class name missing **")
-        elif arg != "BaseModel":
+        elif args[0] != "BaseModel":
             print("** class doesn't exist **")
-        else:
+        elif len(args) < 2:
             print("** instance id missing **")
-    pass
+        else:
+            key = "{}.{}".format(args[0], args[1])
+            if key not in storage.all():
+                print("** no instance found **")
+            else:
+                del storage.all()[key]
+                storage.save()
+
     def do_all(self, arg):
         """Prints all string representation of all instances based or not on the class name"""
-        if not arg:
-            print("** class name missing **")
-        elif arg != "BaseModel":
+        args = arg.split()
+        if not args:
+            new_list = [str(obj) for key, obj in storage.all().items()]
+            print(new_list)
+        elif args[0] != "BaseModel":
             print("** class doesn't exist **")
         else:
-            print("** instance id missing **")
-    pass
+            new_list = [str(obj) for key, obj in storage.all().items() if isinstance(obj, BaseModel)]
+            print(new_list)
+
     def do_update(self, arg):
         """Updates an instance based on the class name and id by adding or updating attribute"""
-        if not arg:
+        args = arg.split()
+        if not args:
             print("** class name missing **")
-        elif arg != "BaseModel":
+        elif args[0] != "BaseModel":
             print("** class doesn't exist **")
-        else:
+        elif len(args) < 2:
             print("** instance id missing **")
-    pass
+        elif len(args) < 3:
+            print("** attribute name missing **")
+        elif len(args) < 4:
+            print("** value missing **")
+        else:
+            key = "{}.{}".format(args[0], args[1])
+            if key not in storage.all():
+                print("** no instance found **")
+            else:
+                attribute = args[2]
+                value = args[3]
+                cast = None
+                if not value.startswith('"'):
+                    if '.' in value:
+                        cast = float
+                    else:
+                        cast = int
+                else:
+                    value = value.replace('"', '')
+                attributes = storage.attributes()[args[0]]
+                if attribute in attributes:
+                    value = attributes[attribute](value)
+                elif cast:
+                    try:
+                        value = cast(value)
+                    except ValueError:
+                        pass
+                setattr(storage.all()[key], attribute, value)
+                storage.all()[key].save()
+
     def do_count(self, arg):
         """Retrieves the number of instances of a class"""
-        if not arg:
+        args = arg.split()
+        if not args:
             print("** class name missing **")
-        elif arg != "BaseModel":
+        elif args[0] != "BaseModel":
             print("** class doesn't exist **")
         else:
-            print("** instance id missing **")
-
-    pass
-    def do_BaseModel(self, arg):
-        """Retrieves an instance based on its ID"""
-        if not arg:
-            print("** class name missing **")
-        elif arg != "BaseModel":
-            print("** class doesn't exist **")
-        else:
-            print("** instance id missing **")
-    pass
+            matches = [k for k in storage.all() if k.startswith(args[0] + '.')]
+            print(len(matches))
 
 
 if __name__ == '__main__':
